@@ -169,3 +169,36 @@ func GetAllUsers() gin.HandlerFunc {
 		)
 	}
 }
+
+func CreateBook() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		var book models.Book
+		defer cancel()
+
+		//validate the request body
+		if err := c.BindJSON(&book); err != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		//use the validator library to validate required fields
+		if validationErr := validate.Struct(&book); validationErr != nil {
+			c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
+			return
+		}
+
+		newBook := models.Book{
+			Id:    primitive.NewObjectID(),
+			Title: book.Title,
+		}
+
+		result, err := userCollection.InsertOne(ctx, newBook)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	}
+}
