@@ -1,13 +1,14 @@
 package main
 
 import (
+	"TestApi/configs"
+	_ "TestApi/docs"
+	"TestApi/routes"
 	"net/http"
 
-	// import the extractions
-	"TestApi/configs"
-	"TestApi/routes"
-
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 var db = make(map[string]string)
@@ -28,6 +29,9 @@ func setupRouter() *gin.Engine {
 		"foo":  "bar", // user:foo password:bar
 		"manu": "123", // user:manu password:123
 	}))
+
+	// Swagger endpoint
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	authorized.POST("admin", func(c *gin.Context) {
 		user := c.MustGet(gin.AuthUserKey).(string)
